@@ -1,11 +1,5 @@
 <?php
-$conn = new mysqli("localhost", "root", "", "admin_order");
-
-if (isset($_GET['complete'])) {
-    $id = $_GET['complete'];
-    $conn->query("UPDATE orders SET status='Completed' WHERE id=$id");
-}
-
+include 'db.php';
 $orders = $conn->query("SELECT * FROM orders WHERE status='Pending'");
 ?>
 

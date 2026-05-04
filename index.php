@@ -1,5 +1,5 @@
 <?php
-$conn = new mysqli("localhost", "root", "", "admin_order");
+include 'db.php';
 $items = $conn->query("SELECT * FROM items");
 ?>
 
