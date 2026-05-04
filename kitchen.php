@@ -1,11 +1,6 @@
 <?php
 include'db.php';
 
-if (isset($_GET['complete'])) {
-    $id = $_GET['complete'];
-    $conn->query("UPDATE orders SET status='Completed' WHERE id=$id");
-}
-
 $orders = $conn->query("SELECT * FROM orders WHERE status='Pending'");
 ?>
 

@@ -1,5 +1,6 @@
 <?php
-include'db.php';
+include 'db.php';
+$items = $conn->query("SELECT * FROM items");
 ?>
 
 <h1>Welcome to Our Restaurant</h1>
