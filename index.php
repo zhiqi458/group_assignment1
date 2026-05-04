@@ -1,5 +1,5 @@
 <?php
-$conn = new mysqli("localhost", "root", "", "restaurant_db");
+$conn = new mysqli("localhost", "root", "", "admin_order");
 $items = $conn->query("SELECT * FROM items");
 ?>
 
