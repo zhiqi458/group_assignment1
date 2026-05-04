@@ -1,6 +1,5 @@
 <?php
-$conn = new mysqli("localhost", "root", "", "restaurant_db");
-$items = $conn->query("SELECT * FROM items");
+include'db.php';
 ?>
 
 <h1>Welcome to Our Restaurant</h1>

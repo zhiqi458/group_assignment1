@@ -1,5 +1,5 @@
 <?php
-$conn = new mysqli("localhost", "root", "", "restaurant_db");
+include'db.php';
 
 if (isset($_GET['complete'])) {
     $id = $_GET['complete'];
