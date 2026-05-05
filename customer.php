@@ -1,5 +1,8 @@
 <?php include 'db.php'; ?>
+<link rel="stylesheet" href="style.css">
+<div class="header">
 <h2>Customer Menu</h2>
+</div>
 <form action="admin_add.php?action=place_order" method="POST">
     <table border="1">
         <?php

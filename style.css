@@ -1,0 +1,15 @@
+body{
+    margin: 0%;
+}
+
+/* Header 内部样式 */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* 让内容在主轴居中 */
+    padding: 10px 20px;
+    background-color: #333;
+    color: white;
+    position: relative; /* 为标题的绝对定位或图标的定位提供参考 */
+    height: 60px;       /* 建议固定高度，方便对齐 */
+}

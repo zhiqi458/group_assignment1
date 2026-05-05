@@ -1,5 +1,8 @@
 <?php include 'db.php'; ?>
+<link rel="stylesheet" href="style.css">
+<div class="header">
 <h2>Kitchen Dashboard</h2>
+</div>
 <div style="display: flex; flex-wrap: wrap;">
     <?php
     $orders = $conn->query("SELECT * FROM orders WHERE status='Pending'");
