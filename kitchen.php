@@ -1,14 +1,21 @@
-<?php
-include 'db.php';
-$orders = $conn->query("SELECT * FROM orders WHERE status='Pending'");
-?>
-
-<h1>Kitchen Dashboard</h1>
-<?php while($order = $orders->fetch_assoc()): ?>
-    <div style="border:1px solid #000; margin:10px; padding:10px;">
-        <p><strong>Order ID: <?php echo $order['id']; ?></strong></p>
-        <p>Table Number: <?php echo $order['table_number']; ?></p>
-        <p>Total Price: $<?php echo number_format($order['total_price'], 2); ?></p>
-        <a href="?complete=<?php echo $order['id']; ?>" style="background:gray; color:white; padding:5px;">Mark as Done</a>
-    </div>
-<?php endwhile; ?>
+<?php include 'db.php'; ?>
+<h2>Kitchen Dashboard</h2>
+<div style="display: flex; flex-wrap: wrap;">
+    <?php
+    $orders = $conn->query("SELECT * FROM orders WHERE status='Pending'");
+    while($order = $orders->fetch_assoc()) {
+        echo "<div style='border:1px solid black; margin:10px; padding:10px; width:200px;'>
+                <strong>Order ID: #{$order['id']}</strong><br>
+                Table: {$order['table_number']}<hr>";
+        
+        $details = $conn->query("SELECT * FROM order_details WHERE order_id=".$order['id']);
+        while($d = $details->fetch_assoc()) {
+            echo "- {$d['item_name']} x {$d['quantity']} ({$d['remark']})<br>";
+        }
+        
+        echo "<hr><a href='process.php?action=complete_order&id={$order['id']}' 
+                 style='background:red; color:white; padding:5px; text-decoration:none;'>Delete (Complete)</a>
+              </div>";
+    }
+    ?>
+</div>
