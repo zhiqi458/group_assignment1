@@ -273,3 +273,30 @@ a { text-decoration: none; transition: 0.3s; }
     .header h1 { font-size: 20px; }
     .form-row { grid-template-columns: 1fr; }
 }
+
+.current-image-preview {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #f1f2f6;
+    padding: 10px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+.current-image-preview img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.current-image-preview span {
+    font-size: 0.75rem;
+    color: #636e72;
+    font-weight: 600;
+}
+    input[type="file"] {
+    font-size: 0.8rem;
+    padding: 10px;
+}
