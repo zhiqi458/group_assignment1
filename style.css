@@ -1,229 +1,181 @@
-body{
-    margin: 0%;
+/* --- 1. 基础重置 --- */
+* { box-sizing: border-box; } /* 确保所有元素计算尺寸一致 */
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f5f7fa;
+    color: #2d3436;
+    line-height: 1.5;
 }
 
-/* Header 内部样式 */
+html { scroll-behavior: smooth; }
+
+a { text-decoration: none; transition: 0.3s; }
+
+/* --- 2. Header & 导航 --- */
 .header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center; /* 让内容在主轴居中 */
-    padding: 10px 20px;
-    background-color: #333;
-    color: white;
-    position: relative; /* 为标题的绝对定位或图标的定位提供参考 */
-    height: 60px;       /* 建议固定高度，方便对齐 */
-}
-
-.menu-icon {
-    position: absolute;  /* 绝对定位 */
-    left: 20px;         /* 固定在最左边 */
-    font-size: 1.5rem;
-    cursor: pointer;
-    transition: 0.3s;
-    z-index: 10;        /* 确保图标在最上层可点击 */
+    padding: 20px 25px;
+    background: #656b6d;
+    color: #f1f2f6;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 .header h1 {
-    margin: 0;
-    font-size: 1.5rem;
+    flex-grow: 1;
     text-align: center;
-    flex-grow: 1;       /* 配合 justify-content 确保占据中间空间 */
+    margin: 0;
+    font-size: 24px;
 }
 
-.menu-icon:hover {
-    color: #28a745;
+.login-link, .menu-icon {
+    min-width: 60px;
+    font-weight: 600;
+    cursor: pointer;
+    color: inherit;
 }
 
-/* 侧边栏抽屉基础样式保持不变 */
+.login-link:hover { color: #86f583; }
+.menu-icon:hover { color: #55efc4; }
+
+/* --- 3. 侧边栏 Drawer --- */
 .drawer {
     height: 100%;
     width: 0; 
     position: fixed;
-    z-index: 2000;      /* 提高层级，确保在所有元素之上 */
+    z-index: 2000;
     top: 0;
     left: 0;
-    background-color: #111;
+    background-color: #1e272e;
     overflow-x: hidden;
-    transition: 0.5s; 
+    transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     padding-top: 60px;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.3);
 }
 
 .drawer-content h3 {
-    color: #818181;
+    color: #d2dae2;
     padding: 0 32px;
-    font-size: 1.2rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    margin-bottom: 20px;
 }
 
 .drawer a {
-    padding: 15px 32px;
-    text-decoration: none;
-    font-size: 1.1rem;
-    color: #818181;
+    padding: 12px 32px;
+    font-size: 0.95rem;
+    color: #808e9b;
     display: block;
-    transition: 0.3s;
 }
 
 .drawer a:hover {
-    color: #f1f1f1;
-    background-color: #28a745;
+    color: #fff;
+    background-color: #05c46b;
+    padding-left: 40px;
 }
 
-/* 关闭按钮 */
-.drawer .close-btn {
-    position: absolute;
-    top: 0;
-    right: 25px;
-    font-size: 36px;
-    margin-left: 50px;
-}
-
-/* 锚点平滑滚动效果 */
-html {
-    scroll-behavior: smooth;
-}
-
-.card {
-    /* 1. 增加整体宽度，从 340px 增加到 450px */
-    width: 450px;           
-    /* 2. 增加内边距，让左右空间更充裕 */
-    padding: 40px 30px;     
-    margin: 60px auto; 
-    border: 2px solid black;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3); /* 稍微柔化阴影，更显大气 */
+/* --- 4. 区域标题 --- */
+.section-header {
     display: flex;
-    flex-direction: column; 
-    align-items: center;    
-    border-radius: 12px;    /* 增加圆角，配合宽体更现代 */
-    background-color: #fff;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+    background: #fff;
+    margin: 30px 25px 10px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
 }
 
-.card .card_text {
-    margin-bottom: 25px;
-    font-weight: bold;
-    font-size: 1.8rem;      /* 标题也稍微放大一点 */
-    color: #333;
+.section-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding-left: 15px;
+    border-left: 4px solid #05c46b;
 }
 
-/* 统一 Label 尺寸 */
-.card label {
-    display: block;      
-    /* 3. 内部元素宽度占比可以稍微调高，看起来更饱满 */
-    width: 90%;             
-    text-align: left;   
-    margin-top: 18px;       
-    font-size: 1.1rem;      
-    font-weight: 600;       
+.add-item-btn {
+    background: linear-gradient(to right, #05c46b, #0be881);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    box-shadow: 0 4px 10px rgba(5, 196, 107, 0.2);
 }
 
-/* 调整 Input 和 Select */
-.card input, 
-.card select {
-    width: 90%;            
-    padding: 15px;          /* 增加内边距，让输入框变高变肥 */
-    margin-top: 8px; 
-    border: 2px solid #333; /* 边框加粗 */
-    border-radius: 8px;     /* 圆角增加 */
-    font-size: 1rem;
-    box-sizing: border-box; 
-}
-
-/* 按钮样式优化 */
-/* 1. 清除超链接默认样式 */
-.card a {
-    text-decoration: none;    /* 去掉下划线 */
-    color: inherit;           /* 继承父元素的颜色，防止变成蓝色 */
-    display: block;           /* 让链接撑满整个按钮区域 */
-    width: 100%;
-}
-
-.card button {
-    width: 90%;
-    padding: 15px;
-    margin-top: 35px;
-    cursor: pointer;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    /* 平滑过渡效果 */
-    transition: all 0.2s ease; 
-    /* 防止点击时出现蓝色外框 */
-    outline: none; 
-}
-
-/* 2. 鼠标悬停效果：稍微变深 */
-.card button:hover {
-    background-color: #0056b3;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
-
-/* 3. 核心：点击时的“弹跳”缩放效果 */
-.card button:active {
-    transform: scale(0.95);    /* 点击时缩小到 95%，产生凹陷弹跳感 */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* 阴影变小 */
-}
-/* 1. 容器设置：一行四个 */
-/* 确保容器是一行四个 */
+/* --- 5. 商品网格与卡片 --- */
 .menu-container {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 20px;
-    padding: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* 自动适配宽度 */
+    gap: 15px;
+    padding: 25px;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
 .card {
     background: #fff;
-    border: 2px solid #333;
-    border-radius: 8px;
-    padding: 20px;           /* 增加内边距，让内部不拥挤 */
+    border-radius: 12px;
+    padding: 15px;
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    box-sizing: border-box;
+    transition: 0.3s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
 }
 
-/* 按钮与照片的距离控制 */
-.admin-actions {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    display: flex;
-    gap: 8px;
-    z-index: 10;            /* 确保按钮在图片上方，不会被遮挡 */
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08);
 }
 
 .card img {
     width: 100%;
-    height: 180px;
+    height: 100px;
     object-fit: cover;
-    border-radius: 4px;
-    /* 关键：增加 margin-top 确保照片不会顶到右上角的按钮 */
-    margin-top: 30px;        
-    margin-bottom: 15px;
+    border-radius: 8px;
+    background-color: #f1f2f6;
+    margin: 20px 0 10px;
 }
 
-/* 描述文字样式 */
+.card .card_text { font-weight: 700; font-size: 0.85rem; }
+
 .description {
-    font-size: 0.9rem;
-    color: #666;
+    font-size: 0.7rem;
+    color: #636e72;
     text-align: center;
-    margin: 10px 0;
-    /* 限制描述行数，防止过长撑破格子 */
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
+    margin: 5px 0;
+    height: 32px;
     overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* 限制两行文本 */
+    -webkit-box-orient: vertical;
 }
 
 .price {
-    font-weight: bold;
-    color: #d9534f;
-    margin-bottom: 5px;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #ff4757;
+    margin: 5px 0;
 }
 
-/* 右上角按钮样式 */
+.stock {
+    font-size: 0.65rem;
+    color: #a4b0be;
+    background: #f1f2f6;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+/* 管理按钮 */
 .admin-actions {
     position: absolute;
     top: 10px;
@@ -232,111 +184,93 @@ html {
     gap: 5px;
 }
 
-.edit-btn{
-    text-decoration: none;
-    font-size: 12px;
-    padding: 4px 8px;
-    color: white;
-    border-radius: 4px;
-    font-weight: bold;
+.edit-btn, .delete-btn {
+    font-size: 0.6rem;
+    padding: 3px 8px;
+    color: #fff;
+    border-radius: 20px;
+    font-weight: 700;
 }
 
-.edit-btn { background-color: #f0ad4e; }
-/* 默认删除按钮样式（假设你原本就有） */
-.delete-btn {
-    background-color: #ff4d4d; /* 原始红色 */
-    font-size: 12px;
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    text-decoration: none;
-    font-weight: bold;
-    transition: background-color 0.2s; /* 让颜色过渡自然 */
-}
+.edit-btn { background: #ffa502; }
+.delete-btn { background: #ff4757; }
 
-/* 鼠标悬停时稍微深一点 */
-.delete-btn:hover {
-    background-color: #ff3333;
-}
-
-/* 重点：点击那一瞬间变成粉色 */
-.delete-btn:active, .delete-btn.clicked {
-    background-color: #ff69b4 !important; /* HotPink 粉色 */
-    color: white;
-}
-
-/* 5. 图片适配 */
-.card img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-    margin-top: 20px;         /* 给顶部的按钮留出空间 */
-    border-radius: 5px;
-}
-
-/* 区域标题样式 */
-/* 标题和按钮的父容器 */
-.section-header {
+/* --- 6. 表单页面 (Add/Edit) --- */
+.modern-form-wrapper {
     display: flex;
-    justify-content: space-between; /* 两端对齐 */
-    align-items: center;            /* 垂直居中 */
-    padding: 10px 40px;
-    background: #eee;               /* 与你之前的标题背景一致 */
-    margin-top: 40px;
-    border-left: 8px solid #28a745;  /* 保持你的绿色装饰 */
+    justify-content: center;
+    padding: 40px 20px;
 }
 
-/* 移除原标题的背景和边距，交由父容器控制 */
-.section-title {
-    margin: 0;
-    font-size: 1.8rem;
-    color: #333;
-    border: none;
-    padding: 0;
+.modern-form-card {
+    background: #fff;
+    width: 100%;
+    max-width: 450px;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
 }
 
-/* Add 按钮样式 */
-.add-item-btn {
-    text-decoration: none;
-    background-color: #28a745;      /* 绿色符合添加逻辑 */
-    color: white;
-    padding: 10px 20px;
-    border-radius: 5px;
-    font-weight: bold;
-    font-size: 1rem;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+.form-group { margin-bottom: 18px; }
+
+.form-group label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #636e72;
+    margin-bottom: 6px;
+    text-transform: uppercase;
 }
 
-/* 鼠标悬停和点击效果 */
-.add-item-btn:hover {
-    background-color: #218838;
-    transform: translateY(-2px);    /* 向上轻微浮动 */
+.modern-form-card input, 
+.modern-form-card textarea, 
+.modern-form-card select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #f1f2f6;
+    border-radius: 10px;
+    background: #f8f9fa;
+    outline: none;
+    transition: 0.3s;
 }
 
-.add-item-btn:active {
-    transform: scale(0.95);         /* 你要的弹跳压缩感 */
+.modern-form-card input:focus, 
+.modern-form-card textarea:focus {
+    border-color: #05c46b;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(5, 196, 107, 0.1);
 }
 
-/* 分割线 */
-.divider {
-    margin: 50px 0;
-    border: 0;
-    border-top: 2px dashed #ccc;
-}
-
-/* 无内容时的提示 */
-.empty-msg {
-    grid-column: span 4; /* 让提示占据一整行 */
-    text-align: center;
-    color: #999;
-    padding: 20px;
-}
-
-/* 保持你之前的一行四个布局 */
-.menu-container {
+.form-row {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    padding: 20px 40px;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.submit-full-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #05c46b, #0be881);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(5, 196, 107, 0.3);
+}
+
+.cancel-link {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: #a4b0be;
+    font-size: 0.8rem;
+}
+
+/* --- 7. 响应式微调 --- */
+@media (max-width: 768px) {
+    .menu-container { grid-template-columns: repeat(2, 1fr); padding: 15px; }
+    .section-header { margin: 20px 15px 5px; }
+    .header h1 { font-size: 20px; }
+    .form-row { grid-template-columns: 1fr; }
 }

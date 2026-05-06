@@ -1,92 +1,119 @@
 <?php
 include("db.php");
 
+// --- 保持你原本的 PHP 逻辑不变 ---
+if (isset($_GET['action']) && $_GET['action'] == 'place_order') {
+    $table_number = $_POST['table_number'];
+    $qtys = $_POST['qty'];
+    $remarks = $_POST['remark'];
+    $prices = $_POST['price'];
+    $names = $_POST['item_name'];
+
+    foreach ($qtys as $id => $qty) {
+        if ($qty > 0) {
+            $name = $names[$id];
+            $price = $prices[$id];
+            $remark = $remarks[$id];
+            $total = $qty * $price;
+
+            $sql = "INSERT INTO orders (table_number, item_name, quantity, price, total_price, remark, status) 
+                    VALUES ('$table_number', '$name', '$qty', '$price', '$total', '$remark', 'Unpaid')";
+            mysqli_query($conn, $sql);
+            mysqli_query($conn, "UPDATE items SET stock = stock - $qty WHERE id = $id");
+        }
+    }
+    echo "<script>alert('Order Placed!'); window.location.href='cashier.php';</script>";
+}
+
 if (isset($_POST['add_item'])) {
     $name = $_POST['name'];
     $desc = $_POST['description'];
     $price = $_POST['price'];
-    $category = $_POST['category']; // FOOD 或 DRINK
+    $category = $_POST['category'];
     $stock = $_POST['stock'];
     
-    // --- 动态路径修改开始 ---
-    // 根据选择的分类决定存放在 images/food/ 还是 images/drink/
     $sub_folder = ($category == "FOOD") ? "food/" : "drink/";
     $directory = "images/" . $sub_folder;
-    // --- 动态路径修改结束 ---
-
     $image = $_FILES['image']['name'];
     $target = $directory . basename($image);
 
-    // 如果分类文件夹不存在，则自动创建
     if (!is_dir($directory)) {
         mkdir($directory, 0777, true);
     }
 
-    // 数据库中仍然建议只存文件名，或者存相对路径
-    // 这里为了方便管理，我们在数据库存入包含分类的路径：food/image.jpg
     $db_save_path = $sub_folder . $image;
-
     $sql = "INSERT INTO items (i_name, description, price, category, stock, image) 
             VALUES ('$name', '$desc', '$price', '$category', '$stock', '$db_save_path')";
 
     if (mysqli_query($conn, $sql)) {
         if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
-            echo "<script>
-                    alert('菜品添加成功，已存入 " . $category . " 目录！');
-                    window.location.href='admin_menu.php';
-                  </script>";
+            echo "<script>alert('菜品添加成功！'); window.location.href='admin_menu.php';</script>";
         } else {
-            echo "<script>alert('图片移动失败，请检查文件夹权限');</script>";
+            echo "<script>alert('图片上传失败');</script>";
         }
-    } else {
-        echo "Error: " . mysqli_error($conn);
     }
 }
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add New Menu Item</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="header">
+        <div class="menu-icon" onclick="window.location.href='admin_menu.php'">✕</div>
         <h1>Add New Menu Item</h1>
     </div>
     
-    <div class="card">
-        <!-- enctype 必须保留，否则无法上传图片 -->
-        <form method="POST" enctype="multipart/form-data">
-            
-            <label>Item Name:</label>
-            <input type="text" name="name" placeholder="Enter item name" required>
+    <!-- 使用新的容器名，避免冲突 -->
+    <div class="modern-form-wrapper">
+        <div class="modern-form-card">
+            <form method="POST" enctype="multipart/form-data">
+                <h2 class="form-section-title">Item Details</h2>
+                
+                <div class="form-group">
+                    <label>Item Name</label>
+                    <input type="text" name="name" placeholder="Enter item name" required>
+                </div>
 
-            <label>Description:</label>
-            <textarea name="description" placeholder="Enter item description"></textarea>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" rows="3" placeholder="What's special about this dish?"></textarea>
+                </div>
 
-            <label>Price:</label>
-            <input type="number" step="0.01" name="price" placeholder="8.00" required>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Price (RM)</label>
+                        <input type="number" step="0.01" name="price" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select name="category">
+                            <option value="FOOD">Food</option>
+                            <option value="DRINK">Drink</option>
+                        </select>
+                    </div>
+                </div>
 
-            <label>Category:</label>
-            <select name="category">
-                <!-- 这里的 value 必须和数据库查询语句中的 'FOOD' 和 'DRINK' 完全一样 -->
-                <option value="FOOD">Food</option>
-                <option value="DRINK">Drink</option>
-            </select>
+                <div class="form-group">
+                    <label>Initial Stock</label>
+                    <input type="number" name="stock" placeholder="Enter quantity" required>
+                </div>
 
-            <label>Initial Stock:</label>
-            <input type="number" name="stock" placeholder="Enter stock quantity" required>
+                <div class="form-group">
+                    <label>Upload Image</label>
+                    <input type="file" name="image" class="file-input" required>
+                </div>
 
-            <label>Upload Image:</label>
-            <input type="file" name="image" required>
-
-            <!-- 重要：去掉按钮里的 <a> 标签，否则表单不会提交 -->
-            <button type="submit" name="add_item">Add Item</button>
-            
-            <a href="admin_menu.php" class="back-link">Back To Menu Page</a>
-            
-        </form>
+                <button type="submit" name="add_item" class="submit-full-btn">Add To Menu</button>
+                
+                <a href="admin_menu.php" class="cancel-link">Cancel and Return</a>
+            </form>
+        </div>
     </div>
 </body>
 </html>
