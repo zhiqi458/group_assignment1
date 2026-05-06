@@ -156,7 +156,6 @@ a { text-decoration: none; transition: 0.3s; }
     height: 32px;
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 2; /* 限制两行文本 */
     -webkit-box-orient: vertical;
 }
 
