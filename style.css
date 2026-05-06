@@ -296,7 +296,7 @@ a { text-decoration: none; transition: 0.3s; }
     color: #636e72;
     font-weight: 600;
 }
-    input[type="file"] {
+input[type="file"] {
     font-size: 0.8rem;
     padding: 10px;
 }
