@@ -1,4 +1,16 @@
 <?php include 'db.php'; ?>
+
+<?php 
+if(isset($_POST['action'])) {
+    $orders = $conn->query("SELECT * FROM orders WHERE status='Pending' ORDER BY id ASC");
+    $result = mysqli_fetch_array($orders);
+    echo json_encode($result);
+    
+    exit();
+}
+
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,6 +38,7 @@
 <div class="order-grid">
     <?php
     // Fetch pending orders, oldest first
+    
     $orders = $conn->query("SELECT * FROM orders WHERE status='Pending' ORDER BY id ASC");
     
     if($orders->num_rows > 0):
@@ -106,13 +119,67 @@
     let timeLeft = 2;
     const countdownElement = document.getElementById('countdown');
     
-    // setInterval(function() {
-    //     timeLeft--;
-    //     if (countdownElement) countdownElement.innerText = timeLeft;
-    //     if (timeLeft <= 0) {
-    //         window.location.reload();
-    //     }
-    // }, );
+    setInterval(async function() {
+    
+        const formData=new FormData();
+        formData.append('action','post');
+        
+        const response=await fetch(window.location.href,{method:'POST',body:formData}
+            
+        ).then(res=>{
+            return res.json();
+        }).then(datas=>{
+            datas.forEach((data)=>{
+            
+            const kitchenList=data;
+            menu.innerHTML=`
+            <div class="order-card">
+            <div class="order-header">
+                <span class="order-id">#${kitchenList.id}</span>
+                <span class="order-time" style="font-size: 0.8rem; opacity: 0.8;">
+                    Sent: ${kitchenList.created_time}
+                </span>
+                <span class="table-tag">TABLE ${kitchenList.table_number}</span>
+            </div>
+            
+            <div class="order-body">
+                    <div class="item-row">
+                        <div>
+                            <span class="item-name">/span>
+                          
+                                <span class="item-remark">Note: </span>
+                           
+                        </div>
+                        <div class="item-qty">x/div>
+                    </div>
+                
+            </div>
+            
+            <div class="order-footer">
+                <a href="process.php?action=complete_order&id=${kitchenList.id}" 
+                   class="btn-done"
+                   onclick="return confirm('Mark Order #${kitchenList.id} as Completed?')">
+                    Complete Order
+                </a>
+            </div>
+        </div>
+        `;
+        });
+        });
+        
+        
+        const menu=document.querySelector(".order-grid");
+       
+        
+        
+
+        
+        if (countdownElement) countdownElement.innerText = timeLeft;
+        
+        if (timeLeft <= 0) {
+            window.location.reload();
+        }
+    }, 1000);
 </script>
 
 </body>

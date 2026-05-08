@@ -358,7 +358,7 @@ function deleteOrder() {
 async function finalSettlePayment() {
     const formData = new FormData();
     formData.append('action', 'pay');
-    formData.append('table_number', currentTable);
+    formData.append('table_id', currentTable);
     formData.append('payment_method', currentMethod);
 
     try {
@@ -366,11 +366,11 @@ async function finalSettlePayment() {
         const text = await response.text();
         const result = JSON.parse(text);
 
-        if (result.success) {
+        if (result.status) {
             alert("支付成功！");
             location.reload(); // 刷新后，Paid 状态的桌子会变回 IDLE 灰色
         } else {
-            alert("错误: " + result.message);
+            alert("错误: " + result.status);
         }
     } catch (e) {
         alert("网络或系统错误，请检查后端输出。");
