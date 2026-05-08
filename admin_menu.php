@@ -64,7 +64,7 @@
             <a href="#food-section" onclick="closeNav()">Food Selection</a>
             <a href="#drink-section" onclick="closeNav()">Drink Selection</a>
             <hr>
-            <a href="admin_add.php">Add New Item</a>
+            <a href="customer.php">Customer Menu</a>
             <a href="close_bill.php">Close Bill</a>
             <a href="cashier.php">Cashier</a>
         </div>

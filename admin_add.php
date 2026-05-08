@@ -1,36 +1,62 @@
 <?php
 include("db.php");
 
-// --- 保持你原本的 PHP 逻辑不变 ---
+// ==========================================
+// 逻辑 A：处理下单 (从 Cashier 页面传来)
+// ==========================================
 if (isset($_GET['action']) && $_GET['action'] == 'place_order') {
-    $table_number = $_POST['table_number'];
-    $qtys = $_POST['qty'];
-    $remarks = $_POST['remark'];
-    $prices = $_POST['price'];
-    $names = $_POST['item_name'];
+    $table_number = mysqli_real_escape_string($conn, $_POST['table_number']);
+    $qtys = $_POST['qty'] ?? [];
+    $prices = $_POST['price'] ?? []; // 确保这里收到了价格数组
+    $names = $_POST['item_name'] ?? [];
+    $remarks = $_POST['remark'] ?? [];
 
+    // 1. 创建主订单记录
+    $order_sql = "INSERT INTO orders (table_number, total_price, status) VALUES ('$table_number', 0, 'PENDING')";
+    if (!mysqli_query($conn, $order_sql)) {
+        die("Order Creation Failed: " . mysqli_error($conn));
+    }
+    $new_order_id = mysqli_insert_id($conn);
+
+    $grand_total = 0;
+
+    // 2. 循环处理菜品
     foreach ($qtys as $id => $qty) {
+        $qty = (int)$qty;
         if ($qty > 0) {
-            $name = $names[$id];
-            $price = $prices[$id];
-            $remark = $remarks[$id];
-            $total = $qty * $price;
+            $name = mysqli_real_escape_string($conn, $names[$id]);
+            // 核心修复：确保 price 存在且为数字
+            $price = isset($prices[$id]) ? (float)$prices[$id] : 0; 
+            $remark = mysqli_real_escape_string($conn, $remarks[$id]);
+            $subtotal = $qty * $price;
+            $grand_total += $subtotal;
 
-            $sql = "INSERT INTO orders (table_number, item_name, quantity, price, total_price, remark, status) 
-                    VALUES ('$table_number', '$name', '$qty', '$price', '$total', '$remark', 'Unpaid')";
-            mysqli_query($conn, $sql);
-            mysqli_query($conn, "UPDATE items SET stock = stock - $qty WHERE id = $id");
+            // 写入详情表
+            $detail_sql = "INSERT INTO order_details (order_id, item_name, price, quantity, remark) 
+                           VALUES ('$new_order_id', '$name', '$price', '$qty', '$remark')";
+            mysqli_query($conn, $detail_sql);
+
+            // 更新库存
+            mysqli_query($conn, "UPDATE items SET stock = stock - $qty WHERE id = '$id'");
         }
     }
-    echo "<script>alert('Order Placed!'); window.location.href='cashier.php';</script>";
+
+    // 3. 更新主表总价
+    mysqli_query($conn, "UPDATE orders SET total_price = '$grand_total' WHERE id = '$new_order_id'");
+
+    echo "<script>alert('Order Placed Successfully! Total: RM" . number_format($grand_total, 2) . "'); window.location.href='cashier.php';</script>";
+    exit();
 }
 
+// ==========================================
+// 逻辑 B：处理添加新菜品 (当前页面表单提交)
+// ==========================================
 if (isset($_POST['add_item'])) {
-    $name = $_POST['name'];
-    $desc = $_POST['description'];
-    $price = $_POST['price'];
+    $name = mysqli_real_escape_string($conn, $_POST['name']);
+    $desc = mysqli_real_escape_string($conn, $_POST['description']);
+    $price = (float)$_POST['price'];
     $category = $_POST['category'];
-    $stock = $_POST['stock'];
+    $stock = (int)$_POST['stock'];
     
     $sub_folder = ($category == "FOOD") ? "food/" : "drink/";
     $directory = "images/" . $sub_folder;
@@ -41,16 +67,19 @@ if (isset($_POST['add_item'])) {
         mkdir($directory, 0777, true);
     }
 
-    $db_save_path = $sub_folder . $image;
-    $sql = "INSERT INTO items (i_name, description, price, category, stock, image) 
-            VALUES ('$name', '$desc', '$price', '$category', '$stock', '$db_save_path')";
+    if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
+        $db_save_path = $sub_folder . $image;
+        // 注意：这里使用的是 i_name (匹配你之前的 get_table_bill.php 查询)
+        $sql = "INSERT INTO items (i_name, description, price, category, stock, image) 
+                VALUES ('$name', '$desc', '$price', '$category', '$stock', '$db_save_path')";
 
-    if (mysqli_query($conn, $sql)) {
-        if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
-            echo "<script>alert('菜品添加成功！'); window.location.href='admin_menu.php';</script>";
+        if (mysqli_query($conn, $sql)) {
+            echo "<script>alert('Item added successfully!'); window.location.href='admin_menu.php';</script>";
         } else {
-            echo "<script>alert('图片上传失败');</script>";
+            echo "<script>alert('Database Error: " . mysqli_error($conn) . "');</script>";
         }
+    } else {
+        echo "<script>alert('Image upload failed. Check folder permissions.');</script>";
     }
 }
 ?>
@@ -59,33 +88,41 @@ if (isset($_POST['add_item'])) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add New Menu Item</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* 这里的 CSS 保持你之前的现代风格 */
+        .modern-form-wrapper { padding: 40px; display: flex; justify-content: center; background: #f0f2f5; }
+        .modern-form-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; }
+        .submit-full-btn { width: 100%; padding: 15px; background: #6c5ce7; color: white; border: none; border-radius: 10px; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
+        .submit-full-btn:hover { background: #5b4cc4; }
+    </style>
 </head>
 <body>
-    <div class="header">
-        <div class="menu-icon" onclick="window.location.href='admin_menu.php'">✕</div>
-        <h1>Add New Menu Item</h1>
+    <div class="header" style="background:#2d3436; color:white; padding:20px; text-align:center; position:relative;">
+        <span style="position:absolute; left:20px; cursor:pointer;" onclick="window.location.href='admin_menu.php'">✕</span>
+        <h1 style="margin:0;">Add New Menu Item</h1>
     </div>
     
-    <!-- 使用新的容器名，避免冲突 -->
     <div class="modern-form-wrapper">
         <div class="modern-form-card">
             <form method="POST" enctype="multipart/form-data">
-                <h2 class="form-section-title">Item Details</h2>
+                <h2 style="margin-top:0; color:#6c5ce7;">Item Details</h2>
                 
                 <div class="form-group">
                     <label>Item Name</label>
-                    <input type="text" name="name" placeholder="Enter item name" required>
+                    <input type="text" name="name" placeholder="e.g. Chocolate Cookie" required>
                 </div>
 
                 <div class="form-group">
                     <label>Description</label>
-                    <textarea name="description" rows="3" placeholder="What's special about this dish?"></textarea>
+                    <textarea name="description" rows="3" placeholder="Describe the item..."></textarea>
                 </div>
 
-                <div class="form-row">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
                     <div class="form-group">
                         <label>Price (RM)</label>
                         <input type="number" step="0.01" name="price" placeholder="0.00" required>
@@ -101,17 +138,15 @@ if (isset($_POST['add_item'])) {
 
                 <div class="form-group">
                     <label>Initial Stock</label>
-                    <input type="number" name="stock" placeholder="Enter quantity" required>
+                    <input type="number" name="stock" placeholder="100" required>
                 </div>
 
                 <div class="form-group">
                     <label>Upload Image</label>
-                    <input type="file" name="image" class="file-input" required>
+                    <input type="file" name="image" required>
                 </div>
 
-                <button type="submit" name="add_item" class="submit-full-btn">Add To Menu</button>
-                
-                <a href="admin_menu.php" class="cancel-link">Cancel and Return</a>
+                <button type="submit" name="add_item" class="submit-full-btn">Create Item</button>
             </form>
         </div>
     </div>

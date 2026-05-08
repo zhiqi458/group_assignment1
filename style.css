@@ -7,6 +7,18 @@ body {
     background-color: #f5f7fa;
     color: #2d3436;
     line-height: 1.5;
+
+}
+
+:root {
+    --bg-color: #f0f2f5;
+    --card-bg: #ffffff;
+    --primary-color: #2c3e50;    /* Dark Navy */
+    --accent-color: #e67e22;     /* Orange for remarks */
+    --success-color: #27ae60;    /* Green for completion */
+    --text-main: #2d3436;
+    --text-sub: #636e72;
+    --border-color: #dfe6e9;
 }
 
 html { scroll-behavior: smooth; }
@@ -25,6 +37,21 @@ a { text-decoration: none; transition: 0.3s; }
     top: 0;
     z-index: 1000;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    justify-content: center; /* 让内容在主轴居中 */
+    padding: 10px 20px;
+    background-color: var(--primary-color);
+    color: white;
+    position: relative; /* 为标题的绝对定位或图标的定位提供参考 */
+    height: 60px;       /* 建议固定高度，方便对齐 */
+}
+
+.menu-icon {
+    position: absolute;  /* 绝对定位 */
+    left: 20px;         /* 固定在最左边 */
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: 0.3s;
+    z-index: 10;        /* 确保图标在最上层可点击 */
 }
 
 .header h1 {
@@ -73,7 +100,6 @@ a { text-decoration: none; transition: 0.3s; }
     color: #808e9b;
     display: block;
 }
-
 .drawer a:hover {
     color: #fff;
     background-color: #05c46b;
@@ -300,3 +326,428 @@ input[type="file"] {
     font-size: 0.8rem;
     padding: 10px;
 }
+
+/* 菜单网格布局 */
+.menu-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* 手机端单列 */
+    gap: 20px;
+}
+
+@media (min-width: 600px) {
+    .menu-grid { 
+        grid-template-columns: 1fr 1fr; /* 平板以上双列 */
+    } 
+}
+
+/* 1. 核心网格布局：自动适应屏幕宽度，一行放更多 */
+.menu-grid {
+    display: grid;
+    /* 核心修改：minmax(180px, 1fr) 会在宽度允许时自动增加列数 */
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+    gap: 12px; 
+    padding: 15px;
+}
+
+/* 2. 点餐卡片：缩小内边距和圆角 */
+.menu-card {
+    background: white;
+    border-radius: 8px; 
+    padding: 12px; /* 缩小内边距 */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: transform 0.2s;
+    border: 1px solid #eee;
+}
+
+.menu-card:hover {
+    transform: translateY(-3px); /* 悬浮位移也稍微减小 */
+}
+
+/* 3. 新增：图片容器样式（确保 HTML 中有这个结构） */
+.menu-image {
+    width: 100%;
+    height: 120px; /* 固定高度，让卡片整齐 */
+    overflow: hidden;
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
+
+.menu-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 裁剪图片以填充容器，不拉伸 */
+}
+
+/* 4. 文字信息缩小 */
+.menu-info h3 {
+    font-size: 1rem; /* 减小字号 */
+    color: #2d3436;
+    margin: 5px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* 防止菜名太长折行 */
+}
+
+.menu-info .description {
+    font-size: 0.8rem; /* 减小描述字号 */
+    color: #636e72;
+    margin-bottom: 8px;
+    min-height: auto; /* 紧凑布局下不再强求最小高度 */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.menu-info .price {
+    font-size: 1.1rem;
+    color: #e74c3c;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+/* 5. 紧凑型输入区域 */
+.menu-action {
+    border-top: 1px solid #f5f5f5;
+    padding-top: 10px;
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* 元素间距 */
+    margin-bottom: 6px;
+}
+
+.input-group label {
+    font-size: 0.75rem; /* 标签缩小 */
+    width: auto; /* 宽度自适应 */
+    color: #95a5a6;
+}
+
+.qty-input {
+    width: 50px; /* 数量框更窄 */
+    padding: 4px 6px;
+    font-size: 0.85rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.remark-input {
+    flex: 1;
+    padding: 4px 2px;
+    font-size: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* 6. 底部结算栏微调 */
+.checkout-bar {
+    position: sticky;
+    bottom: 15px; /* 离底部近一点 */
+    background: white;
+    padding: 12px 20px;
+    border-radius: 50px; /* 改为胶囊状更现代 */
+    margin-top: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+}
+
+.submit-btn {
+    background: #ff6b6b;
+    padding: 8px 24px;
+    font-size: 1rem;
+    border-radius: 20px;
+}
+.header-order-section { /* 建议改个名，避免和原本的 .header 冲突 */
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.header-order-section h2 {
+    font-size: 28px;
+    color: var(--primary-color);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.refresh-timer {
+    font-size: 14px;
+    color: var(--text-sub);
+}
+
+/* 订单网格布局 - 区别于 menu-grid */
+.order-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 20px; /* 增加边距 */
+}
+
+/* 订单卡片 - 采用独立类名，不影响原本的 .card 或 .menu-card */
+.order-card {
+    background: var(--card-bg);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    border-top: 6px solid var(--primary-color);
+    transition: transform 0.2s ease;
+    width: auto; /* 覆盖原有 .card 可能带有的固定宽度 */
+}
+
+.order-card:hover {
+    transform: translateY(-3px);
+}
+
+/* 订单头部 */
+.order-header {
+    padding: 15px;
+    background: #fdfdfd;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.order-id {
+    font-weight: 800;
+    font-size: 1.2em;
+}
+
+.table-tag {
+    background: var(--primary-color);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: bold;
+}
+
+.table-select {
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-weight: bold;
+}
+
+/* 订单主体 */
+.order-body {
+    padding: 15px;
+    flex-grow: 1;
+    min-height: 120px;
+}
+
+.item-row {
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f1f1;
+    display: flex;
+    justify-content: space-between;
+}
+
+.item-row:last-child {
+    border-bottom: none;
+}
+
+.item-name {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.item-qty {
+    background: #edf2f7;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.item-remark {
+    display: block;
+    color: var(--accent-color);
+    font-size: 0.85em;
+    font-style: italic;
+    margin-top: 4px;
+}
+
+/* 订单底部 */
+.order-footer {
+    padding: 15px;
+    background: #fafafa;
+}
+
+.btn-done {
+    display: block;
+    background: var(--success-color);
+    color: white;
+    text-align: center;
+    padding: 12px;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: background 0.2s;
+}
+
+.btn-done:hover {
+    background: #219150;
+}
+
+/* 无内容时的占位 */
+.no-orders {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 50px;
+    color: var(--text-sub);
+    font-size: 1.2em;
+}
+/* 如果想在特定页面微调背景而不改动全局 body，可以给该页面的 container 加背景 */
+.order-page-wrapper {
+    background-color: #f9f9f9;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 20px 100px 20px; /* 底部留白给结算栏 */
+}
+
+
+/* 结算栏：使用 fixed 固定在最下方 */
+.checkout-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    padding: 15px 5%;
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 3000; /* 确保在抽屉 z-index 2000 之上 */
+}
+
+/* 这里的 .table-info 内部 input 样式 */
+.table-info input {
+    padding: 8px;
+    width: 80px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.total-display {
+    font-size: 1.4rem;
+    font-weight: bold;
+}
+
+#total-amount {
+    color: var(--accent-color); /* 使用你定义的橙色变量 */
+}
+
+/* 提交按钮：增加你喜欢的弹跳感 */
+.submit-btn {
+    background: var(--success-color); /* 使用你定义的绿色变量 */
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.submit-btn:hover {
+    background: #219150;
+    transform: translateY(-2px);
+}
+
+.submit-btn:active {
+    transform: scale(0.95); /* 保持你要求的点击弹跳感 */
+}
+
+/* 调整：确保菜单卡片描述高度一致 */
+.menu-card .description {
+    color: var(--text-sub);
+    font-size: 0.9rem;
+    height: 40px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+/* 抽屉基础样式 */
+.drawer {
+    height: 100%;
+    width: 0; /* 默认宽度为0 */
+    position: fixed;
+    z-index: 4000; /* 高于结算栏的 3000 */
+    top: 0;
+    left: 0;
+    background-color: #1e272e;
+    overflow-x: hidden;
+    transition: 0.5s;
+    padding-top: 60px;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+}
+
+.drawer-content h3 {
+    color: #d2dae2;
+    padding: 0 32px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+}
+
+.drawer a {
+    padding: 15px 32px;
+    text-decoration: none;
+    font-size: 1rem;
+    color: #808e9b;
+    display: block;
+    transition: 0.3s;
+}
+
+.drawer a:hover {
+    color: #fff;
+    background-color: #05c46b; /* 使用你之前的绿色 */
+    padding-left: 40px;
+}
+
+.drawer .closebtn {
+    position: absolute;
+    top: 10px;
+    right: 25px;
+    font-size: 36px;
+    margin-left: 50px;
+    color: #808e9b;
+}
+
+/* 锚点跳转时的偏移量（防止标题被顶部的 sticky header 遮住） */
+#food-section, #drink-section {
+    scroll-margin-top: 80px; 
+}
+
+/* 结算栏修正：确保它固定在最底部 */
+.checkout-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    padding: 15px 5%;
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 3000;
+}
+
+

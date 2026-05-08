@@ -2,217 +2,428 @@
 session_start();
 include("db.php");
 
-// 权限检查
-if (!isset($_SESSION['admin_user'])) {
-    header("Location: login.php");
-    exit();
-}
+// --- PHP 部分 ---
+if (isset($_POST['action'])) {
+    if (ob_get_length()) ob_end_clean(); 
+    header('Content-Type: application/json');
 
-// 处理支付请求 (AJAX)
-if (isset($_POST['process_payment'])) {
-    $table_id = $_POST['table_id'];
-    $payment_method = $_POST['payment_method'];
+    $table_id = mysqli_real_escape_string($conn, $_POST['table_id']);
+    $action = $_POST['action'];
 
-    // 将该桌子所有 PENDING 订单更新为 COMPLETED
-    $update_sql = "UPDATE orders SET status = 'COMPLETED', payment_method = '$payment_method' 
-                   WHERE table_number = '$table_id' AND status = 'PENDING'";
-    
-    if (mysqli_query($conn, $update_sql)) {
+    if ($action === 'pay') {
+        $payment_method = mysqli_real_escape_string($conn, $_POST['payment_method']);
+        
+        // 核心：更新状态，记录支付方式
+        // 只要状态变成 PAID，cashier.php 就能查到这条记录
+        $sql = "UPDATE orders SET 
+                status = 'PAID', 
+                payment_method = '$payment_method',
+                created_time = NOW() 
+                WHERE table_number = '$table_id' AND status != 'PAID'";
+                
+    } else if ($action === 'cancel') {
+        // 取消订单
+        $sql = "UPDATE orders SET status = 'CANCELLED' 
+                WHERE table_number = '$table_id' AND status != 'PAID'";
+    }
+
+    if (mysqli_query($conn, $sql)) {
         echo json_encode(['status' => 'success']);
     } else {
-        echo json_encode(['status' => 'error']);
+        echo json_encode(['status' => 'error', 'msg' => mysqli_error($conn)]);
     }
     exit();
 }
 
-// 获取当前有订单的桌号，存入数组用于状态对比
+// --- 2. 获取有账单的桌子 (用于前端显示桌子是否亮起) ---
 $active_tables = [];
-$check_query = "SELECT DISTINCT table_number FROM orders WHERE status = 'PENDING'";
+// 状态同步改为 'PAID'
+$check_query = "SELECT DISTINCT o.table_number 
+                FROM orders o
+                INNER JOIN order_details od ON o.id = od.order_id 
+                WHERE o.status NOT IN ('Paid', 'CANCELLED')";
 $check_res = mysqli_query($conn, $check_query);
-while($row = mysqli_fetch_assoc($check_res)) {
-    $active_tables[] = (int)$row['table_number'];
+if($check_res){
+    while($row = mysqli_fetch_assoc($check_res)) {
+        $active_tables[] = (int)$row['table_number'];
+    }
 }
-?>
 
+// 在确认支付的按钮点击事件里
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout Counter</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Modern POS Checkout</title>
     <style>
-        .checkout-container { max-width: 1000px; margin: 30px auto; padding: 0 20px; display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #a29bfe;
+            --success: #00b894;
+            --accent: #fab1a0;
+            --dark: #2d3436;
+            --bg: #f0f2f5;
+            --glass: rgba(255, 255, 255, 0.9);
+        }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, -apple-system; 
+            background: var(--bg); 
+            margin: 0; 
+            color: var(--dark);
+            background-image: radial-gradient(circle at 20% 20%, #e0e5ec 0%, transparent 50%),
+                              radial-gradient(circle at 80% 80%, #d1d9e6 0%, transparent 50%);
+        }
         
-        /* 桌子网格 */
-        .table-sidebar { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .table-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+        /* Header 美化 */
+        .header { 
+            background: var(--dark); 
+            color: white; 
+            padding: 15px 40px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .header button { 
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); 
+            color: white; padding: 10px 20px; border-radius: 10px; cursor: pointer; transition: 0.3s; 
+        }
+        .header button:hover { background: var(--primary); border-color: var(--primary); }
+
+        .main-container { max-width: 1400px; margin: 40px auto; display: grid; grid-template-columns: 400px 1fr; gap: 30px; padding: 0 20px; }
+        
+        /* 桌子选择区（左侧） */
+        .sidebar { 
+            background: var(--glass); padding: 30px; border-radius: 25px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); backdrop-filter: blur(10px);
+            border: 1px solid white;
+        }
+        .table-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
         
         .table-btn { 
-            padding: 20px 10px; border: 2px solid #f1f2f6; border-radius: 15px; 
-            background: #f8f9fa; cursor: pointer; text-align: center; 
-            transition: 0.3s; display: flex; flex-direction: column; gap: 5px;
+            padding: 20px 5px; border: 2px solid #edeff2; border-radius: 18px; background: white;
+            text-align: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .table-btn strong { font-size: 1.2rem; display: block; margin-bottom: 5px; }
+        .table-btn.has-order { border-color: var(--accent); background: #fffaf0; color: #e67e22; }
+        .table-btn.active { 
+            border-color: var(--primary); background: var(--primary); color: white; 
+            transform: scale(1.05) translateY(-5px); 
+            box-shadow: 0 10px 20px rgba(108, 92, 231, 0.2);
+        }
+        .table-btn.empty { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
+
+        /* 右侧详情区 */
+        .bill-panel { 
+            background: white; padding: 40px; border-radius: 25px; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.05); min-height: 600px; 
+            position: relative; border: 1px solid #f1f2f6;
         }
         
-        /* 状态颜色：有单为橙色，选中为绿色，空闲为灰色 */
-        .table-btn.has-order { border-color: #ffa502; color: #ffa502; background: #fff; }
-        .table-btn.empty { opacity: 0.5; cursor: not-allowed; }
-        .table-btn.active { border-color: #05c46b !important; background: #eafaf1 !important; color: #05c46b !important; transform: scale(1.05); }
+        /* 支付方式按钮 */
+        .payment-methods { display: flex; gap: 15px; margin: 25px 0; }
+        /* 基础按钮美化 */
+.method-btn {
+    padding: 15px;
+    margin: 10px 0;
+    border: 2px solid #dfe6e9;
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #2d3436;
+    transition: all 0.3s ease;
+    background: #ffffff;
+}
 
-        .status-dot { font-size: 0.7rem; font-weight: normal; }
+/* 支付方式选中状态 */
+.method-btn.selected {
+    border-color: #6c5ce7;
+    background: #f1f0ff;
+    color: #6c5ce7;
+    box-shadow: 0 4px 12px rgba(108, 92, 231, 0.2);
+    transform: translateY(-2px);
+}
 
-        /* 右侧账单 */
-        .bill-details { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); min-height: 500px; }
-        
-        /* 支付按钮样式 */
-        .payment-methods { display: flex; gap: 10px; margin-top: 20px; }
-        .method-btn { 
-            flex: 1; padding: 15px; border: 2px solid #f1f2f6; border-radius: 12px; 
-            background: white; cursor: pointer; font-weight: 700; transition: 0.2s; 
-            display: flex; flex-direction: column; align-items: center; gap: 8px;
-        }
-        .method-btn.selected { border-color: #05c46b; background: #eafaf1; color: #05c46b; }
-        
-        .pay-now-btn { 
-            width: 100%; margin-top: 20px; padding: 18px; background: #05c46b; 
-            color: white; border: none; border-radius: 12px; font-size: 1.1rem; 
-            font-weight: 800; cursor: pointer; display: none; box-shadow: 0 5px 15px rgba(5,196,107,0.3);
-        }
+.method-btn:hover:not(.selected) {
+    background: #f9f9f9;
+    border-color: #0793ffe8;
+}
 
-        /* 收据 Overlay */
-        #receiptOverlay { 
-            position: fixed; top:0; left:0; width:100%; height:100%; 
-            background: rgba(0,0,0,0.85); display: none; justify-content: center; 
-            align-items: center; z-index: 3000; 
-        }
-        .receipt-paper { 
-            background: white; width: 350px; padding: 40px 30px; border-radius: 5px; 
-            font-family: 'Courier New', Courier, monospace; position: relative;
-        }
+/* 主支付按钮 - 充满力量感的绿色 */
+.main-pay-btn {
+    width: 100%;
+    padding: 18px;
+    margin-top: 20px;
+    background: linear-gradient(135deg, #00b894, #009473);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0, 184, 148, 0.3);
+    transition: all 0.3s ease;
+}
+
+.main-pay-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 184, 148, 0.4);
+}
+
+.main-pay-btn:active {
+    transform: translateY(0);
+}
+
+/* 取消订单按钮 - 柔和的警告红 */
+.cancel-btn {
+    width: 100%;
+    padding: 12px;
+    margin-top: 12px;
+    background: #fab1a0; /* 浅橙红 */
+    color: #d63031;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cancel-btn:hover {
+    background: #ff7675;
+    color: white;
+}
+
+/* 支付区域容器微调 */
+#paymentArea {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 15px;
+    border: 1px solid #eee;
+    margin-top: 20px;
+}
     </style>
 </head>
 <body>
 
 <div class="header">
-    <span class="menu-icon" onclick="window.location.href='admin_menu.php'">&#9776; Back</span>
-    <h1>Checkout Counter</h1>
-    <div style="width:60px"></div>
+    <button onclick="window.location.href='admin_menu.php'">⬅ Back to Admin</button>
+    <h2 style="margin:0; letter-spacing:3px;">ARIELA POS SYSTEM</h2>
+    <button onclick="window.location.href='cashier.php'" style="background:var(--success)">📊 Sales Record</button>
 </div>
 
-<div class="checkout-container">
-    <!-- 1. 10张桌子展示区 -->
-    <div class="table-sidebar">
-        <h3 class="section-title">Table Status</h3>
+<div class="main-container">
+    <div class="sidebar">
+        <h3 style="margin-top:0; color:var(--primary);">Table Selection</h3>
+        <p style="font-size: 0.9rem; color: #636e72;">Identify tables with active bills:</p>
         <div class="table-grid">
-            <?php for ($i = 1; $i <= 10; $i++): 
-                $is_active = in_array($i, $active_tables);
+            <?php for($i=1; $i<=12; $i++): 
+                $active = in_array($i, $active_tables);
             ?>
-                <div class="table-btn <?php echo $is_active ? 'has-order' : 'empty'; ?>" 
-                     id="btn-<?php echo $i; ?>"
-                     onclick="<?php echo $is_active ? "loadBill($i, this)" : "alert('Table $i has no pending orders.')" ; ?>">
-                    <span style="font-size: 1.2rem; font-weight: 800;">T-<?php echo $i; ?></span>
-                    <span class="status-dot"><?php echo $is_active ? "● In Use" : "○ Empty"; ?></span>
-                </div>
+            <div class="table-btn <?php echo $active ? 'has-order' : 'empty'; ?>" 
+                 id="btn-<?php echo $i; ?>"
+                 onclick="<?php echo $active ? "loadBill($i)" : "" ?>">
+                <strong>#<?php echo $i; ?></strong>
+                <small><?php echo $active ? "READY" : "IDLE"; ?></small>
+            </div>
             <?php endfor; ?>
         </div>
     </div>
 
-    <!-- 2. 账单明细区 -->
-    <div class="bill-details" id="billContent">
-        <div style="text-align:center; color:#b2bec3; margin-top:150px;">
-            <div style="font-size: 40px; margin-bottom: 10px;">🧾</div>
-            <h3>Please select an active table</h3>
+    <div class="bill-panel">
+        <div id="billContent">
+            <div style="text-align:center; color:#dfe6e9; margin-top:150px;">
+                <h1 style="font-size: 6rem; margin:0;">🧾</h1>
+                <p style="color:#b2bec3; font-size:1.1rem;">Select a table to display the receipt details</p>
+            </div>
         </div>
+
+        <!-- 支付方式选择区域 -->
+        <div id="paymentArea" style="display:none;">
+            <p style="margin-bottom:10px; font-weight:bold; color:#636e72;">SELECT PAYMENT METHOD</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                <div class="method-btn" onclick="selectMethod('Cash', this)">💵 Cash</div>
+                <div class="method-btn" onclick="selectMethod('Card', this)">💳 Card</div>
+                <div class="method-btn" onclick="selectMethod('TNG', this)">📱 TNG</div>
+            </div>
+            
+            <button onclick="processPayment()" class="main-pay-btn">PROCESS PAYMENT</button>
+            <button onclick="deleteOrder()" class="cancel-btn">Cancel Order</button>
+        </div>
+
+        <!-- 弹窗遮罩层 -->
+        <div id="receiptOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+            <div id="receiptBox" style="background:white; width:350px; border-radius:15px; max-height:90vh; overflow-y:auto;">
+                <!-- JS 会把内容填入这里 -->
+    </div>
+</div>
+
+<!-- 打印专用隐藏容器 -->
+<div id="print-section"></div>
     </div>
 </div>
 
 <div id="receiptOverlay">
-    <div class="receipt-paper" id="receiptPaper"></div>
+    <div class="receipt-box" id="receiptBox"></div>
 </div>
 
 <script>
 let currentTable = null;
-let selectedMethod = null;
+let currentMethod = null;
 
-function loadBill(tableId, element) {
+// 1. 加载账单
+function loadBill(tableId) {
     currentTable = tableId;
-    // UI 反馈
-    document.querySelectorAll('.table-btn').forEach(btn => btn.classList.remove('active'));
-    element.classList.add('active');
+    currentMethod = null; 
+    document.querySelectorAll('.table-grid .table-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`btn-${tableId}`).classList.add('active');
+    document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('selected'));
+    
+    document.getElementById('billContent').innerHTML = '<p style="text-align:center;margin-top:150px;">Loading bill data...</p>';
 
-    // 动态加载账单
-    fetch(`get_table_bill.php?table_id=${tableId}`)
+    fetch(`get_table_bill.php?table_number=${tableId}`)
         .then(res => res.text())
-        .then(html => {
-            document.getElementById('billContent').innerHTML = html;
+        .then(html => { 
+            document.getElementById('billContent').innerHTML = `<div id="billDetails">${html}</div>`;
+            document.getElementById('paymentArea').style.display = 'block';
         });
 }
 
-function selectMethod(method) {
-    selectedMethod = method;
-    document.querySelectorAll('.method-btn').forEach(btn => btn.classList.remove('selected'));
-    event.currentTarget.classList.add('selected');
-    document.getElementById('payBtn').style.display = 'block';
+// 2. 选择支付方式
+// 2. 选择支付方式
+function selectMethod(method, element) {
+    const btns = document.querySelectorAll('.method-btn');
+    btns.forEach(btn => btn.classList.remove('selected'));
+    
+    element.classList.add('selected');
+    
+    // 修改这里：从 selectedPaymentMethod 改为 currentMethod
+    currentMethod = method; 
 }
 
+// 3. 点击大按钮：仅弹出收据预览，不改数据库
+// 3. 点击大按钮：仅弹出收据预览
 function processPayment() {
-    if (!selectedMethod || !currentTable) return;
+    if(!currentTable || !currentMethod) return alert("Please select both table and payment method!");
+    
+    const billContainer = document.getElementById('billDetails');
+    // 关键点：这里选择器必须匹配 get_table_bill.php 输出的 HTML 结构
+    const items = billContainer.querySelectorAll('div[style*="justify-content:space-between"], .bill-item'); 
+    
+    let itemsHtml = "";
+    items.forEach(item => {
+        // 过滤掉包含 "Total" 字样的行，只抓取菜品
+        if(!item.innerText.includes("Total") && !item.innerText.includes("TOTAL")) {
+            itemsHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.9rem;">${item.innerHTML}</div>`;
+        }
+    });
 
-    const total = document.getElementById('finalTotal').innerText;
-    const formData = new FormData();
-    formData.append('process_payment', true);
-    formData.append('table_id', currentTable);
-    formData.append('payment_method', selectedMethod);
+    // 获取总额：匹配你 PHP 输出中 class 为 total-amount 的元素
+    const totalElement = document.querySelector('.total-amount');
+    const total = totalElement ? totalElement.innerText : "$0.00";
 
-    fetch('close_bill.php', { method: 'POST', body: formData })
+    // 弹出收据预览（预览框里会有最终结算按钮）
+    showReceipt(total, itemsHtml);
+}
+
+// --- 取消订单函数 ---
+function deleteOrder() {
+    if(!currentTable) return;
+    
+    if(confirm(`Are you sure you want to CANCEL and DELETE order for Table #${currentTable}?`)) {
+        const formData = new FormData();
+        formData.append('action', 'cancel');
+        formData.append('table_id', currentTable);
+
+        fetch(window.location.href, { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
-            if (data.status === 'success') {
-                showReceipt(total);
+            if(data.status === 'success') {
+                alert("Order cancelled successfully.");
+                location.reload(); // 刷新页面，桌子会变回灰色无状态
+            } else {
+                alert("Error: " + data.msg);
             }
         });
+    }
 }
 
-function showReceipt(total) {
-    const overlay = document.getElementById('receiptOverlay');
-    const paper = document.getElementById('receiptPaper');
-    const now = new Date().toLocaleString();
+async function finalSettlePayment() {
+    const formData = new FormData();
+    formData.append('action', 'pay');
+    formData.append('table_number', currentTable);
+    formData.append('payment_method', currentMethod);
 
-    paper.innerHTML = `
-        <div style="text-align:center; margin-bottom:20px;">
-            <h2 style="margin:0; letter-spacing:2px;">RESTO POS</h2>
-            <p style="margin:5px 0; font-size:0.8rem;">Kuala Lumpur, Malaysia</p>
-            <div style="border-bottom:1px dashed #000; margin:10px 0;"></div>
-            <p><strong>OFFICIAL RECEIPT</strong></p>
-        </div>
-        <p>DATE: ${now}</p>
-        <p>TABLE: T-${currentTable}</p>
-        <p>METHOD: ${selectedMethod.toUpperCase()}</p>
-        <div style="border-bottom:1px dashed #000; margin:10px 0;"></div>
-        <div style="display:flex; justify-content:space-between; font-size:1.4rem; font-weight:bold;">
-            <span>TOTAL</span>
-            <span>RM ${total}</span>
-        </div>
-        <div style="border-bottom:1px dashed #000; margin:10px 0;"></div>
-        <div style="text-align:center; margin-top:30px;">
-            <p>Thank You & Come Again!</p>
-            <p style="background:#000; color:#fff; display:inline-block; padding:5px 10px;">
-                Closing in <span id="timer">10</span>s
-            </p>
+    try {
+        const response = await fetch(window.location.href, { method: 'POST', body: formData });
+        const text = await response.text();
+        const result = JSON.parse(text);
+
+        if (result.success) {
+            alert("支付成功！");
+            location.reload(); // 刷新后，Paid 状态的桌子会变回 IDLE 灰色
+        } else {
+            alert("错误: " + result.message);
+        }
+    } catch (e) {
+        alert("网络或系统错误，请检查后端输出。");
+    }
+}
+
+
+
+// 5. 显示收据函数
+function showReceipt(total, itemsHtml) {
+    const box = document.getElementById('receiptBox');
+    const now = new Date();
+    const dateString = now.toLocaleDateString();
+    const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+    box.innerHTML = `
+        <div style="text-align:left; font-family:monospace; padding:20px; position:relative;">
+            <div onclick="document.getElementById('receiptOverlay').style.display='none'" 
+                 style="position:absolute; right:15px; top:10px; font-size:24px; cursor:pointer; color:#636e72; font-weight:bold;">
+                 ×
+            </div>
+
+            <div style="text-align:center;">
+                <h2 style="color:#27ae60; margin-bottom:5px;">PAYMENT CONFIRMATION</h2>
+                <p style="color:#636e72; margin-top:0;">Please review the items below</p>
+                <p>------------------------------------------</p>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; margin:5px 0;"><span>TABLE:</span> <strong>#${currentTable}</strong></div>
+            <div style="display:flex; justify-content:space-between; margin:5px 0;"><span>METHOD:</span> <strong>${currentMethod.toUpperCase()}</strong></div>
+            <div style="display:flex; justify-content:space-between; margin:5px 0;"><span>TIME:</span> <strong>${dateString} ${timeString}</strong></div>
+            
+            <p>------------------------------------------</p>
+            <div style="margin:15px 0;">
+                ${itemsHtml}
+            </div>
+            <p>------------------------------------------</p>
+
+            <div style="display:flex; justify-content:space-between; font-size:1.6rem; margin:20px 0; color:#130f40;">
+                <span>TOTAL:</span> <strong>${total}</strong>
+            </div>
+            
+            <p>------------------------------------------</p>
+            <div style="text-align:center;">
+                <p style="font-size:0.8rem; color:red;">* Click below to finalize the payment *</p>
+                <button onclick="finalSettlePayment()" 
+                        style="margin-top:15px; width:100%; padding:15px; background:#27ae60; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold;">
+                        DONE & FINISH
+                </button>
+            </div>
         </div>
     `;
-
-    overlay.style.display = 'flex';
-
-    let seconds = 10;
-    const interval = setInterval(() => {
-        seconds--;
-        document.getElementById('timer').innerText = seconds;
-        if (seconds <= 0) {
-            clearInterval(interval);
-            window.location.reload(); 
-        }
-    }, 1000);
+    document.getElementById('receiptOverlay').style.display = 'flex';
 }
 </script>
 </body>
