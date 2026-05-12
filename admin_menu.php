@@ -25,35 +25,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Menu - Secured</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* 登录信息样式 */
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .user-name {
-            color: #05c46b;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-        .logout-btn {
-            color: #ff4757;
-            text-decoration: none;
-            font-size: 0.75rem;
-            border: 1px solid #ff4757;
-            padding: 2px 6px;
-            border-radius: 4px;
-            transition: 0.3s;
-        }
-        .logout-btn:hover {
-            background: #ff4757;
-            color: white;
-        }
-        
-        /* 防止页面内容在重定向瞬间闪烁的保险样式 */
-        body { font-family: sans-serif; }
-    </style>
+    
 </head>
 <body>
     <!-- 1. 侧边栏抽屉结构 -->
@@ -81,7 +53,7 @@
             <div class="user-info">
                 <span class="user-name">👤 <?php echo htmlspecialchars($_SESSION['admin_user']); ?></span>
                 <!-- 建议这里指向专门的登出脚本 logout.php，而不是 login.php -->
-                <a href="login.php" class="logout-btn">Logout</a>
+                <a href="logout.php" class="logout-btn">Logout</a>
             </div>
         </div>
     </div>

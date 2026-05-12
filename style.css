@@ -149,6 +149,7 @@ a { text-decoration: none; transition: 0.3s; }
 .card {
     background: #fff;
     border-radius: 12px;
+    border-radius: 15px;
     padding: 15px;
     position: relative;
     display: flex;

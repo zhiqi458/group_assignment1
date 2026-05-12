@@ -59,8 +59,8 @@ if(isset($_POST['action'])) {
                 while($d = $details->fetch_assoc()):
                 ?>
                     <div class="item-row">
-                        <div>
-                            <span class="item-name"><?php echo $d['item_name']; ?></span>
+                        <div >
+                            <span onclick="tickmenu(this)" class="item-name"><?php echo $d['item_name']; ?></span>
                             <?php if(!empty($d['remark'])): ?>
                                 <span class="item-remark">Note: <?php echo $d['remark']; ?></span>
                             <?php endif; ?>
@@ -182,9 +182,11 @@ if(isset($_POST['action'])) {
     //     }
     // }, 1000);
 
-    
+    function tickmenu(e){
+        e.style.backgroundColor="green";
+    }
+
     setInterval(() => {
-        console.log(123);
         window.location.reload();
     }, 5000);
 </script>

@@ -10,7 +10,13 @@
 <body class="order-page-wrapper">
 
 <!-- 1. 新增：左侧抽屉结构 -->
+
 <div id="myDrawer" class="drawer">
+    
+    <?php if(isset($_SESSION["admin_user"])): ?>
+    
+    </div>
+    <?php endif; ?>
     <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
     <div class="drawer-content">
         <h3>Categories</h3>

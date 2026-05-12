@@ -90,16 +90,7 @@ if (isset($_POST['add_item'])) {
     <meta charset="UTF-8">
     <title>Add New Menu Item</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* 这里的 CSS 保持你之前的现代风格 */
-        .modern-form-wrapper { padding: 40px; display: flex; justify-content: center; background: #f0f2f5; }
-        .modern-form-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; }
-        .submit-full-btn { width: 100%; padding: 15px; background: #6c5ce7; color: white; border: none; border-radius: 10px; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
-        .submit-full-btn:hover { background: #5b4cc4; }
-    </style>
+    
 </head>
 <body>
     <div class="header" style="background:#2d3436; color:white; padding:20px; text-align:center; position:relative;">
