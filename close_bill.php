@@ -275,10 +275,6 @@ function showReceipt(total, itemsHtml) {
     `;
     document.getElementById('receiptOverlay').style.display = 'flex';
 }
-setInterval(() => {
-        console.log(123);
-        window.location.reload();
-    }, 3000);
 </script>
 </body>
 </html>

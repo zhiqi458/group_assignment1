@@ -96,7 +96,7 @@
                 <div class="card">
                     <div class="admin-actions">
                         <a href="admin_edit.php?id=<?php echo $row['id']; ?>" class="edit-btn">Edit</a>
-                        <a href="admin_delete.php?id=<?php echo $row['id']; ?>" class="delete-btn" onclick="return confirm('确定删除吗？')">Delete</a>
+                        <a href="admin_delete.php?id=<?php echo $row['id']; ?>" class="delete-btn" onclick="return confirm('Comfirm Delete?')">Delete</a>
                     </div>
                     <img src="images/<?php echo $row['image']; ?>" alt="">
                     <div class="card_text"><?php echo $row['i_name']; ?></div>
