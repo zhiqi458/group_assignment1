@@ -1,0 +1,26 @@
+.user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-name {
+            color: #05c46b;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .logout-btn {
+            color: #ff4757;
+            text-decoration: none;
+            font-size: 0.75rem;
+            border: 1px solid #ff4757;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: 0.3s;
+        }
+        .logout-btn:hover {
+            background: #ff4757;
+            color: white;
+        }
+        
+        /* 防止页面内容在重定向瞬间闪烁的保险样式 */
+        body { font-family: sans-serif; }
