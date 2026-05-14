@@ -2,10 +2,20 @@
 
 <?php 
 if(isset($_POST['action'])) {
-    $orders = $conn->query("SELECT * FROM orders WHERE status='Pending' ORDER BY id ASC");
+    $orders = $conn->query("SELECT orders.id, orders.table_number, GROUP_CONCAT(CONCAT(order_details.item_name, ' x', order_details.quantity)) as items, MIN(orders.created_time) as created_time FROM orders 
+    INNER JOIN order_details ON orders.id = order_details.order_id
+    WHERE orders.status='Pending' GROUP BY orders.id ORDER BY orders.id ASC");
     $result = mysqli_fetch_array($orders);
-    echo json_encode($result);
-    
+    $json_class=new stdClass();
+    while($row = mysqli_fetch_assoc($orders)) {
+        $json_class->orders[] = $row;
+
+        $update = $conn->query("UPDATE orders SET orders.status='In Progress' WHERE id=".$row['id']);
+
+    }
+
+
+    echo json_encode($json_class);
     exit();
 }
 
@@ -186,9 +196,51 @@ if(isset($_POST['action'])) {
         e.style.backgroundColor="green";
     }
 
-    setInterval(() => {
-        window.location.reload();
-    }, 5000);
+   function loadkitchen(){
+    const menu=document.querySelector(".order-grid");
+        const formData=new FormData();
+        formData.append('action','post');
+        fetch(window.location.href,{method:'POST',body:formData}
+        ).then(res=>{
+            return res.json();
+        }).then(datas=>{
+            // const kitchenList=data;
+            orders=JSON.parse(JSON.stringify(datas.orders));
+            
+            orders.forEach((data)=>{ 
+                
+                const food_details=data.items.split(",");
+                menu.innerHTML+=`
+                <div class="order-card">
+                <div class="order-header">
+                    <span class="order-id">#${data.id}</span>
+                    <span class="order-time" style="font-size: 0.8rem; opacity: 0.8;">
+                        Sent: ${data.created_time}
+                    </span>
+                    <span class="table-tag">TABLE ${data.table_number}</span>
+                </div>
+                <div class="order-body">
+                ${food_details.map(food=>`
+                    <div class="item-row">
+                        <div>
+                            <span class="item-name">${food.split(" x")[0]}</span>
+                        </div>
+                        <div class="item-qty">x${food.split(" x")[1]}</div>
+                    </div>
+                `).join("")}
+                </div>
+                <div class="order-footer">
+                    <a href="process.php?action=complete_order&id=${data.id}" 
+                       class="btn-done"
+                       onclick="return confirm('Mark Order #${data.id} as Completed?')">
+                        Complete Order
+                    </a>
+                </div>`;
+            });
+        });
+   }
+   loadkitchen();
+   setInterval(loadkitchen,5000);
 </script>
 
 </body>
