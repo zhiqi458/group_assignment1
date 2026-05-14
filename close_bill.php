@@ -275,9 +275,12 @@ function showReceipt(total, itemsHtml) {
     `;
     document.getElementById('receiptOverlay').style.display = 'flex';
 }
+<<<<<<< HEAD
 
 
 
+=======
+>>>>>>> 38ececc264a66b6cba388e052b4b9041b4e31c21
 </script>
 </body>
 </html>
